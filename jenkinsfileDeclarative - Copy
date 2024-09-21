@@ -21,7 +21,7 @@ stages{
 	stage('archiving'){
 		steps{
 			echo 'archiving out !!'
-			archiveArtifacts 'target/*.jar'
+			archiveArtifacts 'target/*.war'
 			
 		}
 	}
