@@ -1,15 +1,22 @@
-node('master'){
-stage('checkout'){
-	echo 'Checking out !!'
-}
+node() {
+    stage('checkout') {
+        echo 'Checking out !!'
+        git 'https://github.com/Sivada12/petclinic.git'
+    }
 
-stage('build'){
-	echo 'Building!!'
-}
+    stage('build') {
+        echo 'Building out !!'
+        env.PATH = "C:/Program Files/Maven/apache-maven-3.9.9/bin;c:\\windows\\system32"
+        bat 'mvn package'
+    }
 
-stage('archiving'){
-	echo 'archiving !!'
-
+    stage('archiving') {
+        echo 'Archiving out !!'
+        archiveArtifacts artifacts: 'target/*.war'
+    }
+    
+    stage('post') {
+        echo 'Pipeline finished'
+        step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/*.xml'])
+    }
 }
-}
-
