@@ -4,7 +4,7 @@ stages{
 	stage('checkout'){
 		steps{
 			echo 'Checking out !!'
-			git 'https://github.com/vamsibkrishna/spring-petclinic.git'
+			git 'https://github.com/Sivada12/petclinic.git'
 			}
 		}
 
