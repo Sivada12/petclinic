@@ -1,7 +1,7 @@
 node() {
     stage('checkout') {
         echo 'Checking out !!'
-        git 'https://github.com/vamsibkrishna/spring-petclinic.git'
+        git 'https://github.com/Sivada12/petclinic.git'
     }
 
     stage('build') {
@@ -12,7 +12,7 @@ node() {
 
     stage('archiving') {
         echo 'Archiving out !!'
-        archiveArtifacts artifacts: 'target/*.jar'
+        archiveArtifacts artifacts: 'target/*.war'
     }
     
     stage('post') {
