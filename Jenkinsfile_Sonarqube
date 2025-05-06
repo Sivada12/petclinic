@@ -3,12 +3,13 @@ node() {
         echo 'Checking out in Master Branch!!'
         git 'https://github.com/Sivada12/petclinic.git'
 		SONAR_SCANNER_HOME = tool 'SonarQube Scanner'
-		JAVA_HOME = tool 'Java_jdk_21'
-        PATH = "${JAVA_HOME}/bin;C:/Program Files/Maven/apache-maven-3.9.9/bin;${env.PATH}"
+		
     }
 
     stage('build') {
         echo 'Building out  in Master Branch!!'
+JAVA_HOME = tool 'Java_jdk_21'
+        PATH = "${JAVA_HOME}/bin;C:/Program Files/Maven/apache-maven-3.9.9/bin;${env.PATH}"
         env.PATH = "C:/Program Files/Maven/apache-maven-3.9.9/bin;c:\\windows\\system32"
         bat 'mvn package'
     }
