@@ -1,66 +1,72 @@
-node() {
-    stage('checkout') {
-        echo 'Checking out in Master Branch!!'
-        git 'https://github.com/Sivada12/petclinic.git'
-		SONAR_SCANNER_HOME = tool 'SonarQube Scanner'
-		
+node {
+    environment {
+        // Define global environment variables
+        SONAR_SCANNER_HOME = tool 'SonarQube Scanner'
+        JAVA_HOME = tool 'Java_jdk_21'
+        PATH = "${JAVA_HOME}/bin;C:/Program Files/Maven/apache-maven-3.9.9/bin;${env.PATH}"
     }
 
-    stage('build') {
-        echo 'Building out  in Master Branch!!'
-JAVA_HOME = tool 'Java_jdk_21'
-        PATH = "${JAVA_HOME}/bin;C:/Program Files/Maven/apache-maven-3.9.9/bin;${env.PATH}"
-        env.PATH = "C:/Program Files/Maven/apache-maven-3.9.9/bin;c:\\windows\\system32"
-        bat 'mvn package'
+    stage('Checkout') {
+        echo 'Checking out code in Master Branch!!'
+        git 'https://github.com/Sivada12/petclinic.git'
+    }
+
+    stage('Build') {
+        echo 'Building and packaging the project!!'
+        // Ensure PATH includes Maven and JAVA_HOME for the build
+        bat '''
+        set PATH=C:/Program Files/Maven/apache-maven-3.9.9/bin;%PATH%
+        set JAVA_HOME=${JAVA_HOME}
+        mvn clean package
+        '''
     }
 
     stage('SonarQube Analysis') {
-            steps {
-                echo 'Running SonarQube analysis...'
-                withSonarQubeEnv('SonarQube') {
-                    bat """
-                    ${SONAR_SCANNER_HOME}/bin/sonar-scanner.bat ^
-                        -Dsonar.projectKey=PetClinic:SonarQube ^
-                        -Dsonar.projectName="T9 Petclinic Sonarqube" ^
-                        -Dsonar.projectVersion=1.0 ^
-                        -Dsonar.sources=src ^
-                        -Dsonar.java.binaries=target/classes ^
-                        -Dsonar.language=java ^
-                        -Dsonar.exclusions=**/*.java
-                    """
-                }
-            }
+        echo 'Running SonarQube Analysis'
+
+        withSonarQubeEnv('SonarQube') {
+            bat """
+            ${SONAR_SCANNER_HOME}/bin/sonar-scanner.bat ^
+                -Dsonar.projectKey=PetClinic:SonarQube ^
+                -Dsonar.projectName="T9 Petclinic Sonarqube" ^
+                -Dsonar.projectVersion=1.0 ^
+                -Dsonar.sources=src ^
+                -Dsonar.java.binaries=target/classes ^
+                -Dsonar.language=java ^
+                -Dsonar.exclusions=**/*.java
+            """
         }
-		
-    stage('archiving') {
-        echo 'Archiving out  in Master Branch !!'
-        archiveArtifacts artifacts: 'target/*.war'
     }
-    
-    stage('post') {
-        echo 'Pipeline finished  in Master Branch'
-        step([$class: 'JUnitResultArchiver', testResults: '**/target/surefire-reports/*.xml'])
+
+    stage('Archive Artifacts') {
+        echo 'Archiving the WAR file!!'
+        archiveArtifacts artifacts: 'target/*.war', onlyIfSuccessful: true
     }
-	post {
+
+    stage('Post Actions') {
+        echo 'Archiving test reports!!'
+        // Ensures JUnit Test Reports are processed
+        junit '**/target/surefire-reports/*.xml'
+    }
+
+    // Handle post-build actions (logs, notifications, or Quality Gate check)
+    post {
         always {
-            echo 'Pipeline execution completed!'
-        }
-        failure {
-            echo 'Pipeline failed!'
-        }
-        unstable {
-            echo 'Pipeline marked as UNSTABLE due to test failures or quality gates.'
+            echo 'Pipeline execution completed, cleaning up resources!'
         }
         success {
-            echo 'Pipeline executed successfully, checking Quality Gate status...'
+            echo 'Pipeline succeeded, checking SonarQube Quality Gate...'
             script {
                 def qg = waitForQualityGate()
                 if (qg.status != 'OK') {
                     error "Pipeline aborted due to SonarQube Quality Gate failure: ${qg.status}"
                 } else {
-                    echo "SonarQube Quality Gate status: ${qg.status}"
+                    echo "SonarQube Quality Gate passed: ${qg.status}"
                 }
             }
-			}
-			}
+        }
+        failure {
+            echo 'Pipeline failed!!'
+        }
+    }
 }
