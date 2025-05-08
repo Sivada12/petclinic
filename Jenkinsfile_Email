@@ -1,0 +1,47 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Build') {
+            steps {
+                git branch: 'CI/CD', credentialsId: 'a79ed2e2-b2da-4422-9f8d-5c2febe66268', url: 'https://github.com/Sivada12/petclinic.git'
+            }
+        }
+         stage('Test') {
+            steps {
+                bat 'mvn test'
+            }
+        }
+           stage('result') {
+            steps {
+                junit '**/*.xml'
+            }
+        }
+         stage('archive') {
+            steps {
+                 archiveArtifacts artifacts: '**/*.jar', followSymlinks: false  
+            }
+        }
+       
+    }
+	 post {
+        success {
+            mail to: 'sivaranjani1999b@gmail.com',
+                 subject: "Pipeline Successful: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                 body: """
+Good news! The pipeline '${env.JOB_NAME}' [Build #${env.BUILD_NUMBER}] was successful.
+
+You can check it here: ${env.BUILD_URL}.
+"""
+        }
+        failure {
+            mail to: 'sivaranjani1999b@gmail.com',
+                 subject: "Pipeline Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                 body: """
+Unfortunately, the pipeline '${env.JOB_NAME}' [Build #${env.BUILD_NUMBER}] has failed.
+
+Check the logs here: ${env.BUILD_URL}.
+"""
+        }
+    }
+}
