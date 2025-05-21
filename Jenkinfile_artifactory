@@ -1,0 +1,47 @@
+pipeline {
+    agent any
+
+    environment {
+        ARTIFACTORY_SERVER_ID = 'Artifactory' 
+        ARTIFACTORY_REPO = 'ArtifactoryDemo'  
+    }
+
+    stages {
+        stage('Checkout Code') {
+            steps {
+                echo 'Checking out code...'
+				git branch: 'CI/CD', credentialsId: 'a79ed2e2-b2da-4422-9f8d-5c2febe66268', url: 'https://github.com/Sivada12/petclinic.git'
+            }
+        }
+
+         stage('Build') {
+            steps {
+                echo 'Running Maven build to generate artifacts...'
+                bat 'mvn clean package'
+            }
+        }
+
+        stage('Configure Artifactory Server') {
+            steps {
+                script {
+                    def server = Artifactory.server(env.ARTIFACTORY_SERVER_ID)
+                    def uploadSpec = """{
+                        "files": [
+                            {
+                                "pattern": "target\\\\*.jar",
+                                "target": "${ARTIFACTORY_REPO}/my-app/"
+                            }
+                        ]
+                    }"""
+                    server.upload(uploadSpec)
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'Pipeline execution completed.'
+        }
+    }
+}
