@@ -28,7 +28,7 @@ pipeline {
                     def uploadSpec = """{
                         "files": [
                             {
-                                "pattern": "target\\\\*.jar",
+                                "pattern": "target\\\\*.war",
                                 "target": "${ARTIFACTORY_REPO}/my-app/"
                             }
                         ]
